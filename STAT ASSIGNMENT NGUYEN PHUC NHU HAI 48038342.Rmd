@@ -1,0 +1,232 @@
+---
+title: "STAT ASSIGNMENT NGUYEN PHUC NHU HAI"
+output: html_document
+date: "2024-05-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---
+title: "STAT Assignment Nguyen Phuc Nhu Hai 48038342"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-05-15"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question1
+a. Load the data from the file sales.csv and create a scatter plot of Sales against Index.
+```{r}
+sales <- read.csv("sales.csv", header = TRUE)
+plot(sales$Index, sales$Sales, main = "Scartter plot of Sales against Index",
+     xlab = "Index", ylab = "Sales",
+    frame = FALSE)
+abline(lm(Sales ~ Index, data = sales), col = "blue")
+```
+The sccater plot and the blue line show that there is a strong, positive, linear regression 
+between **Sales** and **Index** variables as there is no outlier, and the blue line is slightly 
+goes up following the plots.
+
+b. Fit the model diagnostic regression
+$$ y = \beta_0 + \beta_1{X} + \epsilon$$
+Where:
+  $$y$$ is the predicted value of the dependent variable for any given value of the independent variable.
+  $$\beta_0$$: the intercept, the predicted value of y when the x is 0.
+  $$\beta_1$$: the regression coefficient – how much we expect y to change as x increases.
+  $$X$$: the independent variable ( the variable we expect is influencing y).
+  $$\epsilon$$: the error of the estimate, or how much variation there is in our estimate of the regression coefficient.
+
+```{r}
+M1 <- lm(Sales ~ Index, data = sales)
+plot(M1)
+```
+Comment: 
+  According to the the residual and fitted model, it can be clearly seen that there is 
+a U-shaped parabola form, it suggests that there might be a non-linear relationship between 
+the independent and dependent variables (which is sales and index)
+  The quantile plot of residuals look approximately linear, suggesting the normality 
+assumption for residuals is appropriate
+
+c.  Fit two polynomial models of order 2 and order 3
+Quadratic Model
+$$ y(x) = ax^2+bx+c + \epsilon_i (i=1,2,..,n), a\ne0$$
+$$y$$: the dependent variable. 
+$$x$$:the independent variable.
+$$a,b,c$$ are the coefficients to be estimated.
+$$\epsilon$$: the error term.
+
+
+Cubic Model
+$$ y(x) = ax^2+bx+cx+d + \epsilon_i (i=1,2,..,n), a\ne0$$
+$$y$$: the dependent variable. 
+$$x$$:the independent variable.
+$$a,b,c,d$$ are the coefficients to be estimated.
+$$\epsilon$$: the error term.
+
+
+```{r quadratic model}
+M2 <- lm(Sales ~ Index + I(Index^2), data = sales)
+summary(M2)
+```
+
+```{r cubic model}
+M3 <- lm(Sales ~ Index + I(Index^2)+ I(Index^3), data = sales)
+summary(M3)
+```
+Compare and Comment: Given the similarity in the fit statistics (R-squared, adjusted R-squared, residual standard error) and the non-significance of the cubic term in the cubic model, the quadratic model is preferable. The quadratic model is simpler and equally effective without the unnecessary complexity introduced by the non-significant cubic term. Therefore, the quadratic model (Sales ~ Index + I(Index^2)) is likely the better choice for predicting **Sales** based on the **Index**.
+
+
+d. Plot the data and add the three predicted lines from models M1, M2, and M3 
+
+```{r plot data}
+sales.linear = lm(Sales ~ Index, data = sales)
+anova(sales.linear,M1, M2, M3)
+plot(sales$Sales ~ sales$Index)
+abline(M1,col="red")
+lines(smooth.spline(sales$Index, predict(M2)), col = "blue", lwd=3)
+lines(smooth.spline(sales$Index, predict(M3)), col = "green", lwd = 3, lty =3)
+```
+
+Comment:The preferred model, based on both visual inspection and statistical testing, is likely the quadratic model (M2). It captures the curvature present in the data without unnecessary complexity, aligning with the principle of parsimony in model selection.
+
+e. Assess the significance of the linear, quadratic and cubic terms in M3 using a Sequential
+Sum of Squares
+```{r}
+M1.lm <-lm(Sales ~ Index, data = sales)
+anova(M1.lm)
+
+M2.lm <-lm(Sales ~ Index  + I(Index^2), data = sales)
+anova(M2.lm)
+
+M3.lm <-lm(Sales ~ Index + I(Index^2) + I(Index^3), data = sales)
+anova(M3.lm)
+```
+Comment: We can see that the interaction terms are significant since the F-test 
+of the interaction term has a P-value of 0.8466 > 0.05, they are considered 
+insignificant, indicating that not adding them into the model fit.
+
+
+f.
+M2, which is the quadratic polynomial model, is the best fit for this analyis. 
+First, as this analysis is non-linear so we will use polynomial regression.
+They can be used to model two-dimensional objects to allow us to identify and 
+explore the result of intereaction between these two dimensions. Following what 
+we have analyzed earlier, the model 3 is considered insignificant, so they are not 
+fit in this analysis.
+
+
+
+## Question2
+a. Constructing the preliminary plots
+
+```{r boxplot}
+campaign <- read.csv("campaign.csv", header = TRUE)
+
+boxplot(Score ~ Region + Type, data = campaign)
+```
+```{r interaction plot}
+par(mfrow = c(1, 2))
+with(campaign, interaction.plot(Region, Type, Score)) 
+with(campaign, interaction.plot(Type, Region, Score))
+```
+
+- From the boxplot, we can see that the assumption of equal variance among levels seems approximately valid due to the similar box sizes.
+
+- From both interaction plots we can see parallel lines for the means of each group at different levels of the independent variables, this indicates a insignificant interaction effect between the two independent variables.
+
+b. The full Two-Way ANOVA model with interaction is:
+$$ Y_{ijk} = \mu + \alpha_i + \beta_j + \gamma_{ij} + \epsilon_{ijk},$$
+where the parameters are :
+- $Y_{ijk}$: the campaign recall **Score** response
+- $\mu$: overall mean
+- $\alpha_i$: the **Region** effect, there are two levels - Urban and Rural
+- $\beta_j$: the **Type** effect, there are three levels - Billboard, Email, Social Media
+- $\gamma_{ij}$: interaction effect between **Region** and **Type**.
+- $\epsilon_{ijk} \sim N(0,\sigma^2)$ is the unexplained variation.
+
+c. Null and alternative hypothesis:
+
+$H_0: \gamma_{ij} = 0$ for all $i,j$      against     $H_1$: at least one $\gamma_{ij}\ne0$
+
+Fitting this interaction model
+```{r fitting interaction model}
+campaign.int <- lm(Score ~ Region * Type, data = campaign)
+anova(campaign.int)
+```
+
+As interaction term has the P-value = 0.7657 > 0.05,
+
+(Statistical) There is not enough evidence to reject H0.
+
+(Contextual) We can conclude that the interaction between the **Region** effect and **Type** effect is insignificant and do not have significant effects on the response **Score**. 
+
+We should check assumptions  with the plots
+```{r validation of model}
+par(mfrow = c(1, 2))
+plot(campaign.int, which = 1:2)
+```
+
+- The residual plot seems to show equal spread around the fitted values and so the constant variance assumption is also appropriate.
+
+- The residuals are close to linear in the QQ-plot, and so the normal assumption should be valid.
+
+
+e. Null and alternative hypothesis:
+- For the **Region** effect:
+$H_0: \alpha_i = 0$ for all $i,j$      against     $H_1$: at least one $\alpha_i\ne0$
+- For the **Type** effect:
+$H_0: \beta_j = 0$ for all $i,j$      against     $H_1$: at least one $\beta_j\ne0$
+
+Fitting main effects model
+```{r fitting main effects model}
+campaign.lm = lm(Score ~ Region + Type, data = campaign)
+anova(campaign.lm)
+
+```
+As the P-value for the **Region** effect  = 2.2e-16 < 0.05, for the **Type** effect = 2.2e-16 < 0.05 
+
+(Statistical) There is enough evidence to reject H0. 
+
+(Contextual) We can conclude that the **Type** effect and **Region** effect have significant effects on the response **Score**. 
+
+```{r}
+par(mfrow = c(1, 2))
+plot(campaign.lm, which = 1:2)
+```
+
+- The residual plot seems to show equal spread around the fitted values and so the constant variance assumption is also appropriate.
+
+- The residuals are close to linear in the QQ-plot, and so the normal assumption should be valid.
+
+f.  Repeat the above test analysis for the main effects.
+Overall, the **Region** which is the surveyed area and the **Type** that was used for Billboard, Email and Social media types have a significant effect on the **Score**. The Social media has a outstanding effect on score espacially in Urban area, while Billboard and Email only have a minor contribution on Score. These findings emphasize the importance of focusing in the specific platform and area, enabling businesses to increase the effective of marketing campaign, advertisements which create desirable, consistent products that resonate with consumer preferences and improve market competitiveness.
+
+e. Tukey HSD
+```{r}
+table(campaign[, c("Type", "Region")])
+```
+From the above we can see that the design is balanced with an equal number of replicates for each combination of levels of the two factors.
+
+```{r}
+TukeyHSD(aov(campaign.lm))$Type
+```
+
+Comment: 
+Email-Billboard is significant
+Social Media-Billboard is significant
+Social Media-Email is significant
+
+
+```{r}
+TukeyHSD(aov(campaign.lm))$Region
+```
+
+Comment: Urban- Rural is significant
+
+The Social media has a outstanding effect on score espacially in Urban area, while Billboard (have a least effect) and Email only have a minor contribution on Score, specifically in rural area.
